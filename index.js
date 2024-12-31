@@ -14,6 +14,9 @@ app.use('/api/expedienteMedico', require('./routes/expedienteMedico'));
 app.use('/api/paciente', require('./routes/paciente'));
 app.use('/api/iniciarSesion', require('./routes/iniciarSesion'));
 app.use('/api/crearPaciente', require('./routes/crearPaciente'));
+app.use('/api/obtenerPaciente', require('./routes/obtenerPaciente'));
+app.use('/api/crearMedico', require('./routes/crearMedico'));
+
 
 
 // Iniciar el servidor
