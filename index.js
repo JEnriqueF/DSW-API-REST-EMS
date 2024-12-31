@@ -13,6 +13,7 @@ app.use('/api/consultaEmergencia', require('./routes/consultaEmergencia'));
 app.use('/api/expedienteMedico', require('./routes/expedienteMedico'));
 app.use('/api/paciente', require('./routes/paciente'));
 app.use('/api/iniciarSesion', require('./routes/iniciarSesion'));
+app.use('/api/crearPaciente', require('./routes/crearPaciente'));
 
 
 // Iniciar el servidor
