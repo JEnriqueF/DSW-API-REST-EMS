@@ -4,6 +4,12 @@ require('dotenv').config();
 const validarFormatoCorreo = (correo) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo);
 const validarFormatoCURP = (curp) => /^[A-Z]{4}\d{6}[HM][A-Z]{5}[A-Z0-9]{2}$/.test(curp);
 const validarFormatoTelefono = (telefono) => /^\d{10,12}$/.test(telefono);
+const validarFormatoFecha = (fecha) => {
+    const fechaRegex = /^\d{4}-\d{2}-\d{2}$/; 
+    if (!fechaRegex.test(fecha)) return false;
+    const fechaObjeto = new Date(fecha);
+    return fechaObjeto instanceof Date && !isNaN(fechaObjeto.getTime());
+};
 
 const crearPaciente = async (req, res) => {
     const {
@@ -21,7 +27,6 @@ const crearPaciente = async (req, res) => {
         hospitalRegistro,
     } = req.body;
 
-    // Validaciones iniciales
     if (
         !nombre ||
         !fechaNacimiento ||
@@ -61,16 +66,15 @@ const crearPaciente = async (req, res) => {
         });
     }
 
-    if (isNaN(new Date(fechaNacimiento).getTime())) {
+    if (!validarFormatoFecha(fechaNacimiento)) {
         return res.status(400).json({
-            error: 'El formato de la fecha de nacimiento no es válido.',
+            error: 'El formato de la fecha de nacimiento no es válido. Debe ser YYYY-MM-DD.',
         });
     }
 
     try {
         const pool = await poolPromise;
 
-        // Verificar si el correo ya existe en la base de datos
         const correoExistente = await pool.request()
             .input('correo', sql.NVarChar(100), correo)
             .query('SELECT COUNT(*) AS count FROM Persona WHERE correo = @correo');
@@ -81,7 +85,6 @@ const crearPaciente = async (req, res) => {
             });
         }
 
-        // Paso 1: Insertar Persona
         const personaResult = await pool.request()
             .input('nombre', sql.NVarChar(100), nombre)
             .input('fechaNacimiento', sql.Date, fechaNacimiento)
@@ -103,7 +106,6 @@ const crearPaciente = async (req, res) => {
             });
         }
 
-        // Paso 2: Insertar Paciente
         const pacienteResult = await pool.request()
             .input('contrasena', sql.NVarChar(sql.MAX), contrasena)
             .input('alergias', sql.NVarChar(sql.MAX), alergias || '')
