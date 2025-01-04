@@ -12,7 +12,7 @@ const iniciarSesion = async (req, res) => {
     }
 
     try {
-        const pool = await poolPromise; 
+        const pool = await poolPromise;
 
         let result;
 
@@ -51,27 +51,17 @@ const iniciarSesion = async (req, res) => {
             });
         }
 
-        //payload del token
-        let payload = {};
-        if (role === 'admin') {
-            payload = { role: 'admin', email };
-        } else if (role === 'paciente') {
-            payload = { role: 'paciente', idPaciente: result.output.idPaciente, CURP: email };
-        } else if (role === 'medico') {
-            payload = {
-                role: 'medico',
-                idPersonalMedico: result.output.idPersonalMedico,
-                tipoPersonal: result.output.tipoPersonal,
-                cedulaProfesional: email,
-            };
-        }
-
-        // Firma el token JWT
+        const payload = { email, role };
         const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '2h' });
+
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production', 
+            maxAge: 2 * 60 * 60 * 1000, // 2 horas
+        });
 
         return res.status(200).json({
             message: 'Inicio de sesión exitoso.',
-            token,
             role,
         });
     } catch (err) {
@@ -86,4 +76,3 @@ const iniciarSesion = async (req, res) => {
 module.exports = {
     iniciarSesion,
 };
-
