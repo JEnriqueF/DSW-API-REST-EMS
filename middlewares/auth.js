@@ -1,22 +1,35 @@
 const jwt = require('jsonwebtoken');
+const jwtSecret = process.env.JWT_SECRET;
+const { generaToken } = require('../services/jwttoken');
 
-// Verificar JWT
 const verificarToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
-    const token = authHeader.split(' ')[1]
-
-    if (!token) {
-        return res.status(403).json({ error: 'Se requiere un token' });
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Se requiere un token válido' });
     }
 
-    console.log(process.env.JWT_SECRET)
-    console.log(token)
+    const token = authHeader.split(' ')[1];
+
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.usuario = decoded;
+        const tokenDecodificado = jwt.verify(token, jwtSecret);
+        req.tokenDecodificado = tokenDecodificado;
+
+        const minutosRestantes = (tokenDecodificado.exp - Date.now() / 1000) / 60;
+
+        if (minutosRestantes < 5) {
+            const payload = tokenDecodificado; 
+            const nuevoToken = generaToken(payload);
+
+            res.setHeader('Set-Authorization', `Bearer ${nuevoToken}`);
+        }
+
         next();
-    } catch (err) {
-        res.status(401).json({ error: 'Token inválido' , token: token});
+    } catch (error) {
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({ error: 'El token ha expirado. Por favor, inicie sesión nuevamente.' });
+        }
+        return res.status(401).json({ error: 'Token inválido' });
     }
 };
 

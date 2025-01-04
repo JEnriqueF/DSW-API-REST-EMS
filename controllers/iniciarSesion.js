@@ -1,5 +1,6 @@
-const jwt = require('jsonwebtoken');
 const { poolPromise, sql } = require('../db');
+const { generaToken } = require('../services/jwttoken');
+const ClaimTypes = require('../config/claimtypes'); 
 require('dotenv').config();
 
 const iniciarSesion = async (req, res) => {
@@ -12,8 +13,7 @@ const iniciarSesion = async (req, res) => {
     }
 
     try {
-        const pool = await poolPromise; 
-
+        const pool = await poolPromise;
         let result;
 
         if (role === 'admin') {
@@ -51,23 +51,25 @@ const iniciarSesion = async (req, res) => {
             });
         }
 
-        //payload del token
         let payload = {};
         if (role === 'admin') {
-            payload = { role: 'admin', email };
+            payload = { [ClaimTypes.Role]: 'admin', [ClaimTypes.Email]: email };
         } else if (role === 'paciente') {
-            payload = { role: 'paciente', idPaciente: result.output.idPaciente, CURP: email };
+            payload = {
+                [ClaimTypes.Role]: 'paciente',
+                [ClaimTypes.Id]: result.output.idPaciente,
+                [ClaimTypes.CodigoVerificacion]: email
+            };
         } else if (role === 'medico') {
             payload = {
-                role: 'medico',
-                idPersonalMedico: result.output.idPersonalMedico,
-                tipoPersonal: result.output.tipoPersonal,
-                cedulaProfesional: email,
+                [ClaimTypes.Role]: 'medico',
+                [ClaimTypes.Id]: result.output.idPersonalMedico,
+                [ClaimTypes.GivenName]: result.output.tipoPersonal,
+                [ClaimTypes.CodigoVerificacion]: email
             };
         }
 
-        // Firma el token JWT
-        const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '2h' });
+        const token = generaToken(payload, '2h');
 
         return res.status(200).json({
             message: 'Inicio de sesión exitoso.',
@@ -86,4 +88,3 @@ const iniciarSesion = async (req, res) => {
 module.exports = {
     iniciarSesion,
 };
-
