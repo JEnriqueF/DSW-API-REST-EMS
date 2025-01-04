@@ -1,5 +1,6 @@
-const jwt = require('jsonwebtoken');
 const { poolPromise, sql } = require('../db');
+const { generaToken } = require('../services/jwttoken');
+const ClaimTypes = require('../config/claimtypes'); 
 require('dotenv').config();
 
 const iniciarSesion = async (req, res) => {
@@ -12,6 +13,7 @@ const iniciarSesion = async (req, res) => {
     }
 
     try {
+        const pool = await poolPromise;
         const pool = await poolPromise;
 
         let result;
@@ -51,14 +53,25 @@ const iniciarSesion = async (req, res) => {
             });
         }
 
-        const payload = { email, role };
-        const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '2h' });
+        let payload = {};
+        if (role === 'admin') {
+            payload = { [ClaimTypes.Role]: 'admin', [ClaimTypes.Email]: email };
+        } else if (role === 'paciente') {
+            payload = {
+                [ClaimTypes.Role]: 'paciente',
+                [ClaimTypes.Id]: result.output.idPaciente,
+                [ClaimTypes.CodigoVerificacion]: email
+            };
+        } else if (role === 'medico') {
+            payload = {
+                [ClaimTypes.Role]: 'medico',
+                [ClaimTypes.Id]: result.output.idPersonalMedico,
+                [ClaimTypes.GivenName]: result.output.tipoPersonal,
+                [ClaimTypes.CodigoVerificacion]: email
+            };
+        }
 
-        res.cookie('token', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production', 
-            maxAge: 2 * 60 * 60 * 1000, // 2 horas
-        });
+        const token = generaToken(payload, '2h');
 
         return res.status(200).json({
             message: 'Inicio de sesión exitoso.',
@@ -71,8 +84,8 @@ const iniciarSesion = async (req, res) => {
             detalle: err.message,
         });
     }
-};
 
 module.exports = {
     iniciarSesion,
+};
 };

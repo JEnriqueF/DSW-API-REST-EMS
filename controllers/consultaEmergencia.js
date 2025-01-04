@@ -44,6 +44,34 @@ const obtenerConsultaEmergencia = async (req, res) => {
     }
 };
 
+const insertarConsultaEmergencia = async (req, res) => {
+    const { diagnosticoEmergencia, tratamientoEmergencia, fechaEmergencia, idPaciente, idPersonalMedico } = req.body;
+
+    // Validar que todos los campos requeridos estén presentes
+    if (!diagnosticoEmergencia || !tratamientoEmergencia || !fechaEmergencia || !idPaciente || !idPersonalMedico) {
+        return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+    }
+
+    try {
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('diagnosticoEmergencia', sql.NVarChar, diagnosticoEmergencia)
+            .input('tratamientoEmergencia', sql.NVarChar, tratamientoEmergencia)
+            .input('fechaEmergencia', sql.Date, fechaEmergencia)
+            .input('idPaciente', sql.Int, idPaciente)
+            .input('idPersonalMedico', sql.Int, idPersonalMedico)
+            .output('mensaje', sql.NVarChar) // Especificar tipo de salida
+            .execute('InsertarConsultaEmergencia'); // Ejecutar el procedimiento almacenado
+
+        const mensaje = result.output.mensaje; // Obtener el mensaje de salida
+        res.status(201).json({ mensaje });
+    } catch (err) {
+        console.error('Error al insertar la consulta de emergencia:', err);
+        res.status(500).json({ error: 'Error al insertar la consulta de emergencia' });
+    }
+};
+
 module.exports = {
     obtenerConsultaEmergencia,
+    insertarConsultaEmergencia
 };
