@@ -1,11 +1,82 @@
 const { poolPromise, sql } = require('../db');
 
-const insertarConsultaMedica = async (req, res) => {
-    const { diagnostico, tratamiento, fechaConsulta, idPaciente, idPersonalMedico } = req.body;
+const obtenerConsultasMedicasPorCURP = async (req, res) => {
+    const { CURP, pagina = 1, tamanioPagina = 5 } = req.body;
+
+    if (!CURP) {
+        return res.status(400).json({ mensaje: 'CURP es obligatorio' });
+    }
 
     try {
         const pool = await poolPromise;
-        const transaction = pool.transaction();
+        const result = await pool.request()
+            .input('CURP', sql.NVarChar, CURP)
+            .input('pagina', sql.Int, pagina)
+            .input('tamanioPagina', sql.Int, tamanioPagina)
+            .output('mensaje', sql.NVarChar(100))
+            .execute('ObtenerConsultasMedicasPorCURP');
+
+        const consultas = result.recordset;
+        const mensaje = result.output.mensaje;
+
+        if (!mensaje) {
+            return res.status(500).json({
+                mensaje: 'Error inesperado: no se pudo recuperar el mensaje del procedimiento almacenado.',
+            });
+        }
+
+        if (mensaje !== 'Consultas médicas recuperadas correctamente.') {
+            return res.status(404).json({ mensaje });
+        }
+
+        res.status(200).json(consultas);
+    } catch (err) {
+        console.error('Error al obtener las consultas médicas:', err);
+        res.status(500).json({ error: 'Error al obtener las consultas médicas', detalle: err.message });
+    }
+};
+
+const obtenerTotalConsultasPorCURP = async (req, res) => {
+    const { CURP } = req.body;
+
+    if (!CURP) {
+        return res.status(400).json({ mensaje: 'CURP es obligatorio' });
+    }
+
+    try {
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('CURP', sql.NVarChar, CURP)
+            .output('mensaje', sql.NVarChar(100))
+            .execute('ObtenerTotalConsultasPorCURP');
+
+        const totalConsultas = result.recordset[0].TotalConsultas;
+        const mensaje = result.output.mensaje;
+
+        if (!mensaje) {
+            return res.status(500).json({
+                mensaje: 'Error inesperado: no se pudo recuperar el mensaje del procedimiento almacenado.',
+            });
+        }
+
+        if (mensaje !== 'Total de consultas recuperado correctamente.') {
+            return res.status(404).json({ mensaje });
+        }
+
+        res.status(200).json({ totalConsultas });
+    } catch (err) {
+        console.error('Error al obtener el total de consultas médicas:', err);
+        res.status(500).json({ error: 'Error al obtener el total de consultas médicas', detalle: err.message });
+    }
+};
+
+const insertarConsultaMedica = async (req, res) => {
+    const { diagnostico, tratamiento, fechaConsulta, idPaciente, idPersonalMedico } = req.body;
+    let transaction;
+
+    try {
+        const pool = await poolPromise;
+        transaction = pool.transaction();
         await transaction.begin();
 
         const result = await transaction.request()
@@ -35,7 +106,9 @@ const insertarConsultaMedica = async (req, res) => {
             idConsultaMedica,
         });
     } catch (err) {
-        await transaction.rollback()
+        if (transaction) {
+            await transaction.rollback();
+        }
         console.error('Error al insertar la consulta médica:', err);
         res.status(500).json({ error: 'Error al insertar la consulta médica', detalle: err.message });
     }
@@ -89,5 +162,6 @@ const insertarArchivoConsulta = async (req, res) => {
     }
 };
 
-
-module.exports = { insertarConsultaMedica, insertarArchivoConsulta };
+module.exports = { obtenerConsultasMedicasPorCURP, obtenerTotalConsultasPorCURP, 
+    insertarConsultaMedica, insertarArchivoConsulta 
+};

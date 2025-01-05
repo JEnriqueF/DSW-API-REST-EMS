@@ -25,6 +25,39 @@ const validarPacientePorCURP = async (req, res) => {
     }
 };
 
+const verificarValidacionPaciente = async (req, res) => {
+    const { idPaciente } = req.params;
+
+    try {
+        const pool = await poolPromise;
+        
+        const result = await pool.request()
+            .input('idPaciente', sql.Int, idPaciente)
+            .query('SELECT validado FROM dbo.Paciente WHERE idPaciente = @idPaciente');
+
+        if (result.recordset.length === 0) {
+            return res.status(404).json({ error: 'Paciente no encontrado' });
+        }
+
+        const validacion = result.recordset[0].validado;
+
+        if (validacion === true) {
+            return res.status(200).json({
+                mensaje: 'El paciente está validado.'
+            });
+        } else if (validacion === false) {
+            return res.status(200).json({
+                mensaje: 'El paciente no está validado.'
+            });
+        } else {
+            return res.status(500).json({ error: 'Estado de validación desconocido' });
+        }
+    } catch (err) {
+        console.error('Error al verificar la validación del paciente:', err);
+        return res.status(500).json({ error: 'Error al verificar la validación del paciente', detalle: err.message });
+    }
+};
+
 module.exports = {
-    validarPacientePorCURP,
+    validarPacientePorCURP, verificarValidacionPaciente
 };
