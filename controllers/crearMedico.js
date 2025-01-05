@@ -1,4 +1,5 @@
 const { poolPromise, sql } = require('../db');
+const bcrypt = require('bcrypt');
 
 const crearMedico = async (req, res) => {
     const { CURP, cedulaProfesional, contrasena, tipoPersonal, hospitalTrabajo } = req.body;
@@ -46,10 +47,12 @@ const crearMedico = async (req, res) => {
                 error: 'El usuario ya tiene un perfil médico asociado. No se puede crear otro perfil.',
             });
         }
+        
+        const hashedPassword = await bcrypt.hash(contrasena, 10);
 
         const resultMedico = await pool.request()
             .input('cedulaProfesional', sql.NVarChar(45), cedulaProfesional)
-            .input('contrasena', sql.NVarChar(sql.MAX), contrasena)
+            .input('contrasena', sql.NVarChar(sql.MAX), hashedPassword)
             .input('tipoPersonal', sql.NVarChar(20), tipoPersonal)
             .input('idUsuario', sql.Int, idUsuario)
             .input('hospitalTrabajo', sql.Int, hospitalTrabajo)
