@@ -56,7 +56,7 @@ const crearPaciente = async (req, res) => {
 
     if (!validarFormatoTelefono(telefono)) {
         return res.status(400).json({
-            error: 'El teléfono debe contener entre 10 y 12 dígitos numéricos.',
+            error: 'El teléfono debe contener entre 10 digitos.',
         });
     }
 
@@ -68,7 +68,7 @@ const crearPaciente = async (req, res) => {
 
     if (!validarFormatoFecha(fechaNacimiento)) {
         return res.status(400).json({
-            error: 'El formato de la fecha de nacimiento no es válido. Debe ser YYYY-MM-DD.',
+            error: 'El formato de la fecha de nacimiento no es válido.',
         });
     }
 
