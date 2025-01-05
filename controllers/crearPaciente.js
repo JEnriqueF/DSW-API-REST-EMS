@@ -1,4 +1,5 @@
 const { poolPromise, sql } = require('../db');
+const bcrypt = require('bcrypt');
 require('dotenv').config();
 
 const validarFormatoCorreo = (correo) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo);
@@ -75,6 +76,7 @@ const crearPaciente = async (req, res) => {
     try {
         const pool = await poolPromise;
 
+        // Verificar si el correo ya existe
         const correoExistente = await pool.request()
             .input('correo', sql.NVarChar(100), correo)
             .query('SELECT COUNT(*) AS count FROM Persona WHERE correo = @correo');
@@ -85,6 +87,10 @@ const crearPaciente = async (req, res) => {
             });
         }
 
+        // Encriptar la contraseña antes de almacenarla
+        const hashedPassword = await bcrypt.hash(contrasena, 10);
+
+        // Insertar persona
         const personaResult = await pool.request()
             .input('nombre', sql.NVarChar(100), nombre)
             .input('fechaNacimiento', sql.Date, fechaNacimiento)
@@ -106,8 +112,9 @@ const crearPaciente = async (req, res) => {
             });
         }
 
+        // Insertar paciente
         const pacienteResult = await pool.request()
-            .input('contrasena', sql.NVarChar(sql.MAX), contrasena)
+            .input('contrasena', sql.NVarChar(sql.MAX), hashedPassword)
             .input('alergias', sql.NVarChar(sql.MAX), alergias || '')
             .input('enfermedadesCronicas', sql.NVarChar(sql.MAX), enfermedadesCronicas || '')
             .input('tratamientoActual', sql.NVarChar(sql.MAX), tratamientoActual || '')
