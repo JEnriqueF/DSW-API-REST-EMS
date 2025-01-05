@@ -6,7 +6,7 @@ const validarFormatoCorreo = (correo) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(corre
 const validarFormatoCURP = (curp) => /^[A-Z]{4}\d{6}[HM][A-Z]{5}[A-Z0-9]{2}$/.test(curp);
 const validarFormatoTelefono = (telefono) => /^\d{10,12}$/.test(telefono);
 const validarFormatoFecha = (fecha) => {
-    const fechaRegex = /^\d{4}-\d{2}-\d{2}$/; 
+    const fechaRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!fechaRegex.test(fecha)) return false;
     const fechaObjeto = new Date(fecha);
     return fechaObjeto instanceof Date && !isNaN(fechaObjeto.getTime());
@@ -57,7 +57,7 @@ const crearPaciente = async (req, res) => {
 
     if (!validarFormatoTelefono(telefono)) {
         return res.status(400).json({
-            error: 'El teléfono debe contener entre 10 digitos.',
+            error: 'El teléfono debe contener entre 10 y 12 dígitos.',
         });
     }
 
@@ -76,7 +76,6 @@ const crearPaciente = async (req, res) => {
     try {
         const pool = await poolPromise;
 
-        // Verificar si el correo ya existe
         const correoExistente = await pool.request()
             .input('correo', sql.NVarChar(100), correo)
             .query('SELECT COUNT(*) AS count FROM Persona WHERE correo = @correo');
@@ -87,10 +86,8 @@ const crearPaciente = async (req, res) => {
             });
         }
 
-        // Encriptar la contraseña antes de almacenarla
         const hashedPassword = await bcrypt.hash(contrasena, 10);
 
-        // Insertar persona
         const personaResult = await pool.request()
             .input('nombre', sql.NVarChar(100), nombre)
             .input('fechaNacimiento', sql.Date, fechaNacimiento)
@@ -106,13 +103,12 @@ const crearPaciente = async (req, res) => {
         const idUsuario = personaResult.output.idUsuario;
         const mensajePersona = personaResult.output.mensaje;
 
-        if (idUsuario === 0) {
+        if (!idUsuario) {
             return res.status(400).json({
-                error: mensajePersona,
+                error: mensajePersona || 'Error al insertar la persona.',
             });
         }
 
-        // Insertar paciente
         const pacienteResult = await pool.request()
             .input('contrasena', sql.NVarChar(sql.MAX), hashedPassword)
             .input('alergias', sql.NVarChar(sql.MAX), alergias || '')
@@ -128,9 +124,9 @@ const crearPaciente = async (req, res) => {
         const idPaciente = pacienteResult.output.idPaciente;
         const mensajePaciente = pacienteResult.output.mensaje;
 
-        if (idPaciente === 0) {
+        if (!idPaciente) {
             return res.status(400).json({
-                error: mensajePaciente,
+                error: mensajePaciente || 'Error al insertar el paciente.',
             });
         }
 
