@@ -20,7 +20,13 @@ const iniciarSesion = async (req, res) => {
         if (role === 'admin') {
             queryResult = await pool.request()
                 .input('correo', sql.VarChar(100), email)
-                .query('SELECT contrasena FROM Persona WHERE correo = @correo');
+                .query(`
+                    SELECT pm.contrasena 
+                    FROM PersonalMedico pm
+                    JOIN Persona p ON pm.idUsuario = p.idUsuario
+                    WHERE p.correo = @correo
+                `);
+
         } else if (role === 'paciente') {
             queryResult = await pool.request()
                 .input('CURP', sql.VarChar(20), email)
