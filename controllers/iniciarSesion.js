@@ -14,7 +14,6 @@ const iniciarSesion = async (req, res) => {
 
     try {
         const pool = await poolPromise;
-        const pool = await poolPromise;
 
         let result;
 
@@ -84,8 +83,8 @@ const iniciarSesion = async (req, res) => {
             detalle: err.message,
         });
     }
+};
 
 module.exports = {
     iniciarSesion,
-};
 };
