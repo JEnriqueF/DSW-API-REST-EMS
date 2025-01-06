@@ -73,11 +73,13 @@ const iniciarSesion = async (req, res) => {
             };
         }
         const token = generaToken(payload, '2h');
+        const id = role === 'medico' ? user.idPersonalMedico : role === 'paciente' ? user.idPaciente : '';
 
         return res.status(200).json({
             message: 'Inicio de sesión exitoso.',
             role,
             token,
+            id
         });
     } catch (err) {
         console.error('Error en el inicio de sesión:', err.message);
