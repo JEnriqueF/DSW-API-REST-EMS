@@ -28,3 +28,5 @@ app.listen(PORT, () => {
 }).on('error', (err) => {
     console.error('Error al iniciar el servidor:', err);
 });
+
+module.exports = app;
