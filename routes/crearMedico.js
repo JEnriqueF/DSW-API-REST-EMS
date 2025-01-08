@@ -4,6 +4,6 @@ const { crearMedico } = require('../controllers/crearMedico');
 const { verificarToken } = require('../middlewares/auth');
 
 // Ruta para crear un nuevo personal médico
-router.post('/', verificarToken, crearMedico);
+router.post('/', crearMedico);
 
 module.exports = router;
