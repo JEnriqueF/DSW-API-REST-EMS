@@ -5,6 +5,6 @@ const { verificarToken } = require('../middlewares/auth');
 
 //Ruta
 router.get('/obtenerConsultaEmergencia/:CURP', verificarToken, obtenerConsultaEmergencia);
-router.post('/insertar', insertarConsultaEmergencia);
+router.post('/insertar', verificarToken, insertarConsultaEmergencia);
 
 module.exports = router;

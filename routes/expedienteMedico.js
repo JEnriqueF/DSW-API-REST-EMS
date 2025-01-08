@@ -4,7 +4,7 @@ const { corregirExpedienteMedico, recuperarExpediente, modificarExpediente } = r
 const { verificarToken } = require('../middlewares/auth');
 
 router.put('/corregirExpedienteMedico/:CURP', verificarToken, corregirExpedienteMedico);
-router.post('/recuperar', recuperarExpediente);
-router.put('/modificar', modificarExpediente);
+router.post('/recuperar', verificarToken, recuperarExpediente);
+router.put('/modificar', verificarToken, modificarExpediente);
 
 module.exports = router;

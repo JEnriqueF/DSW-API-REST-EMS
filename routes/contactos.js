@@ -3,11 +3,9 @@ const router = express.Router();
 const { obtenerContactos, insertarContacto, actualizarContacto, eliminarContacto } = require('../controllers/contactos');
 const { verificarToken } = require('../middlewares/auth');
 
-// Ruta protegida con JWT
-//router.get('/:idPaciente', verificarToken, obtenerContactos);
-router.get('/obtenerContactos/:idPaciente', obtenerContactos);
-router.post('/insertarContacto', insertarContacto);
-router.put('/actualizarContacto', actualizarContacto);
-router.delete('/eliminarContacto/:idInformacionEmergencia', eliminarContacto);
+router.get('/obtenerContactos/:idPaciente', verificarToken, obtenerContactos);
+router.post('/insertarContacto', verificarToken, insertarContacto);
+router.put('/actualizarContacto', verificarToken, actualizarContacto);
+router.delete('/eliminarContacto/:idInformacionEmergencia', verificarToken, eliminarContacto);
 
 module.exports = router;
